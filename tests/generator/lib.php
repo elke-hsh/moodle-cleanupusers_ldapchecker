@@ -67,36 +67,5 @@ class userstatus_ldapchecker_generator extends testing_data_generator {
 
         return $deleteduser;
 
-        /*
-        $user = $generator->create_user(array('username' => 'neutraluser', 'lastaccess' => $mytimestamp));
-        $data['user'] = $user;
-
-        $timestamponeyearago = $mytimestamp - 31536000;
-        $userlongnotloggedin = $generator->create_user(array('username' => 'userlongnotloggedin',
-            'lastaccess' => $timestamponeyearago));
-        $data['useroneyearnotlogedin'] = $userlongnotloggedin;
-
-        $timestampfifteendays = $mytimestamp - 1296000;
-        $userfifteendays = $generator->create_user(array('username' => 'userfifteendays', 'lastaccess' => $timestampfifteendays));
-        $data['userfifteendays'] = $userfifteendays;
-
-        // User manually suspended.
-        $oneyearnintydays = $mytimestamp - 39313000;
-        $userarchived = $generator->create_user(array('username' => 'userarchived', 'lastaccess' => $oneyearnintydays,
-            'suspended' => 1));
-        $data['userarchivedoneyearnintydays'] = $userarchived;
-
-        $neverloggedin = $generator->create_user(array('username' => 'neverloggedin'));
-        $data['neverloggedin'] = $neverloggedin;
-
-        // User suspended by the plugin.
-        $tendaysago = $mytimestamp - 864000;
-        $reactivate = $generator->create_user(array('username' => 'Anonym', 'suspended' => 1));
-        $DB->insert_record_raw('tool_cleanupusers', array('id' => $reactivate->id, 'archived' => true), true, false, true);
-        $DB->insert_record_raw('tool_cleanupusers_archive', array('id' => $reactivate->id, 'username' => 'reactivate',
-            'suspended' => 1, 'lastaccess' => $tendaysago), true, false, true);
-        $data['reactivate'] = $reactivate;
-        */
-
     }
 }

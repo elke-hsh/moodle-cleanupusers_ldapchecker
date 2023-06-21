@@ -62,7 +62,7 @@ class userstatus_ldapchecker_testcase extends advanced_testcase {
                                                                     "TU_ID_4" => 1,
                                                                 ));
 
-        // User to susupend
+        // User to suspend
         $returnsuspend = $myuserstatuschecker->get_to_suspend();
         $this->assertEquals("TO_SUSPEND", reset($returnsuspend)->username);
 
@@ -80,59 +80,11 @@ class userstatus_ldapchecker_testcase extends advanced_testcase {
         $this->assertEquals("TO_DELETE_MANUALLY", reset($returndelete)->username);
         $this->assertEquals($deleteduser_by_plugin->id, end($returndelete)->id);
 
-    /*
-        $this->assertEquals($data['userarchivedoneyearnintydays']->id,
-            $returndelete[$data['userarchivedoneyearnintydays']->id]->id);
-        //$this->assertEquals($data['neverloggedin']->id, $returnneverloggedin[$data['neverloggedin']->id]->id);
-        // Merely id is compared since plugin only saves necessary data not complete user.
-        $this->assertEquals($data['reactivate']->id, $returntoreactivate[$data['reactivate']->id]->id);
-        $this->assertNotContains($data['user']->username, $returnsuspend);
-        $this->assertNotContains($data['user']->username, $returndelete);
-        $this->assertNotContains($data['user']->username, $returnneverloggedin);
-        $this->assertNotContains($data['userfifteendays']->username, $returnsuspend);
-        $this->assertNotContains($data['userfifteendays']->username, $returndelete);
-        $this->assertNotContains($data['userfifteendays']->username, $returnneverloggedin);
-
-        // Userarchived is not in array since time is not right.
-        set_config('suspendtime', 400 , 'userstatus_ldapchecker');
-        set_config('deletetime', 730 , 'userstatus_ldapchecker');
-        $newstatuschecker = new ldapchecker();
-        $returnsuspend = $newstatuschecker->get_to_suspend();
-        $returndelete = $newstatuschecker->get_to_delete();
-        $returnneverloggedin = $newstatuschecker->get_never_logged_in();
-
-        $this->assertNotContains($data['user']->username, $returnsuspend);
-        $this->assertNotContains($data['user']->username, $returndelete);
-        $this->assertNotContains($data['user']->username, $returnneverloggedin);
-        $this->assertNotContains($data['useroneyearnotlogedin']->username, $returnsuspend);
-        $this->assertNotContains($data['useroneyearnotlogedin']->username, $returndelete);
-        $this->assertNotContains($data['useroneyearnotlogedin']->username, $returnneverloggedin);
-        $this->assertNotContains($data['userarchivedoneyearnintydays']->username, $returnsuspend);
-        $this->assertNotContains($data['userarchivedoneyearnintydays']->username, $returndelete);
-        $this->assertNotContains($data['userarchivedoneyearnintydays']->username, $returnneverloggedin);
-        $this->assertEquals($data['neverloggedin']->id, $returnneverloggedin[$data['neverloggedin']->id]->id);
-
-        set_config('suspendtime', 10 , 'userstatus_ldapchecker');
-        set_config('deletetime', 20 , 'userstatus_ldapchecker');
-        $newstatuschecker = new ldapchecker();
-        $returnsuspend = $newstatuschecker->get_to_suspend();
-        $returndelete = $newstatuschecker->get_to_delete();
-        $returnneverloggedin = $newstatuschecker->get_never_logged_in();
-
-        $this->assertEquals($data['useroneyearnotlogedin']->id, $returnsuspend[$data['useroneyearnotlogedin']->id]->id);
-        $this->assertEquals($data['userfifteendays']->id, $returnsuspend[$data['userfifteendays']->id]->id);
-        $this->assertEquals($data['userarchivedoneyearnintydays']->id,
-            $returndelete[$data['userarchivedoneyearnintydays']->id]->id);
-        $this->assertNotContains($data['user']->username, $returnsuspend);
-        $this->assertNotContains($data['user']->username, $returndelete);
-        $this->assertNotContains($data['user']->username, $returnneverloggedin);
-        $this->assertEquals($data['neverloggedin']->id, $returnneverloggedin[$data['neverloggedin']->id]->id);
-    */
         $this->resetAfterTest(true);
 
     }
     /**
-     * Methodes recommended by moodle to assure database and dataroot is reset.
+     * Methods recommended by moodle to assure database and dataroot is reset.
      */
     public function test_deleting() {
         global $DB;
@@ -143,7 +95,7 @@ class userstatus_ldapchecker_testcase extends advanced_testcase {
         $this->assertEmpty($DB->get_records('tool_cleanupusers'));
     }
     /**
-     * Methodes recommended by moodle to assure database is reset.
+     * Methods recommended by moodle to assure database is reset.
      */
     public function test_user_table_was_reset() {
         global $DB;

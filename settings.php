@@ -23,7 +23,7 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-// Included in admin/tool/cleanupusers/classes/plugininfo/userstatus.php therefore need to include global variable.
+// Included in admin/tool/cleanupusers/classes/plugininfo/userstatus.php, therefore, need to include global variables.
 global $CFG, $PAGE;
 
 if ($hassiteconfig) {

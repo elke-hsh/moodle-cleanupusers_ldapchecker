@@ -60,7 +60,7 @@ class ldapchecker implements userstatusinterface {
 
             $ldap = ldap_connect($config->host_url) or die("Could not connect to $config->host_url");
 
-            $bind = ldap_bind($ldap, $config->bind_dn, $config->bind_pw); // returns 1 bzw true falls korrekt
+            $bind = ldap_bind($ldap, $config->bind_dn, $config->bind_pw); // returns 1 if correct
 
             if($bind) {
                 $contexts = $config->contexts;
