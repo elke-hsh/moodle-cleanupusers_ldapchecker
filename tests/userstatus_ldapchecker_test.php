@@ -34,7 +34,7 @@ defined('MOODLE_INTERNAL') || die();
  * @copyright  2016/17 N Herrmann
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class userstatus_ldapchecker_testcase extends advanced_testcase {
+class userstatus_ldapchecker_test extends advanced_testcase {
 
     protected function set_up() {
         $config = get_config('userstatus_ldapchecker');
@@ -56,28 +56,28 @@ class userstatus_ldapchecker_testcase extends advanced_testcase {
         // Testing is set to true which means that it does not try to connect to LDAP.
         $myuserstatuschecker = new ldapchecker(true);
 
-        $myuserstatuschecker->fill_ldap_response_for_testing(array( "TU_ID_1" => 1,
-                                                                    "TU_ID_2" => 1,
-                                                                    "TU_ID_3" => 1,
-                                                                    "TU_ID_4" => 1,
+        $myuserstatuschecker->fill_ldap_response_for_testing(array( "tu_id_1" => 1,
+                                                                    "tu_id_2" => 1,
+                                                                    "tu_id_3" => 1,
+                                                                    "tu_id_4" => 1,
                                                                 ));
 
         // User to suspend
         $returnsuspend = $myuserstatuschecker->get_to_suspend();
-        $this->assertEquals("TO_SUSPEND", reset($returnsuspend)->username);
+        $this->assertEquals("to_suspend", reset($returnsuspend)->username);
 
         // Add user which should be reactivated
-        $myuserstatuschecker->fill_ldap_response_for_testing(array( "TU_ID_1" => 1,
-            "TU_ID_2" => 1,
-            "TU_ID_3" => 1,
-            "TU_ID_4" => 1,
-            "TO_REACTIVATE" => 1,
+        $myuserstatuschecker->fill_ldap_response_for_testing(array( "tu_id_1" => 1,
+            "tu_id_2" => 1,
+            "tu_id_3" => 1,
+            "tu_id_4" => 1,
+            "to_reactivate" => 1,
         ));
         $returntoreactivate = $myuserstatuschecker->get_to_reactivate();
-        $this->assertEquals("TO_REACTIVATE", reset($returntoreactivate)->username);
+        $this->assertEquals("to_reactivate", reset($returntoreactivate)->username);
 
         $returndelete = $myuserstatuschecker->get_to_delete();
-        $this->assertEquals("TO_DELETE_MANUALLY", reset($returndelete)->username);
+        $this->assertEquals("to_delete_manually", reset($returndelete)->username);
         $this->assertEquals($deleteduser_by_plugin->id, end($returndelete)->id);
 
         $this->resetAfterTest(true);
