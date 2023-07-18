@@ -95,7 +95,7 @@ class ldapchecker implements userstatusinterface {
     public function get_to_suspend() {
         global $DB;
 
-        $select = "auth='cas' AND deleted=0 AND suspended=0";
+        $select = "auth='shibboleth' AND deleted=0 AND suspended=0";
         $users = $DB->get_records_select('user', $select);
         $tosuspend = array();
 
@@ -119,7 +119,7 @@ class ldapchecker implements userstatusinterface {
      */
     public function get_never_logged_in() {
         global $DB;
-        $select = "auth='cas' AND lastaccess=0 AND deleted=0 AND firstname!='Anonym'";
+        $select = "auth='shibboleth' AND lastaccess=0 AND deleted=0 AND firstname!='Anonym'";
         $arrayofuser = $DB->get_records_select('user', $select);
         $neverloggedin = array();
         foreach ($arrayofuser as $key => $user) {
@@ -147,7 +147,7 @@ class ldapchecker implements userstatusinterface {
         global $DB;
 
         // Select clause for users who are suspended.
-		$select = "auth='cas' AND deleted=0 AND suspended=1 AND (lastaccess!=0 OR firstname='Anonym')";
+		$select = "auth='shibboleth' AND deleted=0 AND suspended=1 AND (lastaccess!=0 OR firstname='Anonym')";
         $users = $DB->get_records_select('user', $select);
         $todeleteusers = array();
 
@@ -215,7 +215,7 @@ class ldapchecker implements userstatusinterface {
     public function get_to_reactivate() {
         global $DB;
         // Only users who are currently suspended are relevant.
-        $select = "auth='cas' AND deleted=0 AND suspended=1";
+        $select = "auth='shibboleth' AND deleted=0 AND suspended=1";
         $users = $DB->get_records_select('user', $select);
         $toactivate = array();
 
