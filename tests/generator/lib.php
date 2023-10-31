@@ -54,12 +54,15 @@ class userstatus_ldapchecker_generator extends testing_data_generator {
         // Create user which should be reactivated (are suspended but in lookup-table)
         $generator->create_user(array('username' => 'to_reactivate', 'auth' => 'shibboleth', 'suspended' => 1));
 
+        // Create user which should NOT be reactivated (are suspended but NOT in lookup-table)
+        $generator->create_user(array('username' => 'to_not_reactivate', 'auth' => 'shibboleth', 'suspended' => 1));
+
         // Create user which was suspended manually and should be deleted (not logged in since one year)
         $timestamponeyearago = time() - 366*86400;
         $generator->create_user(array('username' => 'to_delete_manually', 'auth' => 'shibboleth', 'suspended' => 1, 'lastaccess' => $timestamponeyearago));
 
         // Create user which was suspended with the plugin and should be deleted (was suspended one year ago or earlier)
-        $delete = $generator->create_user(array('username' => 'anonym', 'auth'=>'shibboleth', 'suspended' => 1, 'lastaccess' => $timestamponeyearago));
+        $delete = $generator->create_user(array('username' => 'anonym', 'firstname' => 'Anonym', 'auth'=>'shibboleth', 'suspended' => 1, 'lastaccess' => $timestamponeyearago));
         $DB->insert_record_raw('tool_cleanupusers', array('id' => $delete->id, 'archived' => true, 'timestamp' => $timestamponeyearago), true, false, true);
         $DB->insert_record_raw('tool_cleanupusers_archive', array('id' => $delete->id, 'auth'=>'shibboleth', 'username' => 'TO_DELETE_PLUGIN',
             'suspended' => 1, 'lastaccess' => $timestamponeyearago), true, false, true);

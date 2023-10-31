@@ -75,6 +75,7 @@ class userstatus_ldapchecker_test extends advanced_testcase {
         ));
         $returntoreactivate = $myuserstatuschecker->get_to_reactivate();
         $this->assertEquals("to_reactivate", reset($returntoreactivate)->username);
+        $this->assertEquals("to_reactivate", end($returntoreactivate)->username);
 
         $returndelete = $myuserstatuschecker->get_to_delete();
         $this->assertEquals("to_delete_manually", reset($returndelete)->username);

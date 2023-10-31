@@ -63,6 +63,8 @@ class ldapchecker implements userstatusinterface {
             $bind = ldap_bind($ldap, $config->bind_dn, $config->bind_pw); // returns 1 if correct
 
             if($bind) {
+                $this->log("ldap_bind successful");
+
                 $contexts = $config->contexts;
 
                 $attributes = array('cn');
@@ -77,9 +79,20 @@ class ldapchecker implements userstatusinterface {
                         }
                     }
                 }
+
+                $this->log("ldap server sent " . count($this->lookup) . " users");
+                //$this->log("Printing result entries: ");
+                //$this->log(print_r($this->lookup, true));
+
+            } else {
+                $this->log("ldap_bind failed");
             }
         }
 
+    }
+
+    private function log($text) {
+        file_put_contents("/var/log/httpd/debug_log_ldapchecker.log", "\n[".date("d-M-Y - H:i ")."] $text " , FILE_APPEND);
     }
 
     /**
@@ -204,10 +217,6 @@ class ldapchecker implements userstatusinterface {
     /**
      * All users that should be reactivated will be returned.
      *
-     * User should be reactivated when their lastaccess is smaller than the timesuspend variable. Although users are
-     * not able to sign in when they are flagged as suspended, this is necessary to react when the timesuspended setting
-     * is changed.
-     *
      * @return array of objects
      * @throws \dml_exception
      * @throws \dml_exception
@@ -220,22 +229,19 @@ class ldapchecker implements userstatusinterface {
         $toactivate = array();
 
         foreach ($users as $key => $user) {
-
-            if (!is_siteadmin($user) && !empty($user->username) && array_key_exists($user->username, $this->lookup)) {
-
+            if (!is_siteadmin($user)) {
                 $shadowtableuser = $DB->get_record('tool_cleanupusers_archive', array('id' => $user->id));
 
-                if($shadowtableuser) {
-                    $user = $shadowtableuser;
+                if ($shadowtableuser && array_key_exists($shadowtableuser->username, $this->lookup)) {
+                    $activateuser = new archiveduser($shadowtableuser->id, $shadowtableuser->suspended, $shadowtableuser->lastaccess,
+                        $shadowtableuser->username, $shadowtableuser->deleted);
+
+                    $toactivate[$key] = $activateuser;
+                    $this->log($shadowtableuser->username . " / " . $user->username . " is marked for reactivation");
                 }
-
-                $activateuser = new archiveduser($user->id, $user->suspended, $user->lastaccess,
-                                                 $user->username, $user->deleted);
-
-                $toactivate[$key] = $activateuser;
-
             }
         }
+        $this->log("get_to_reactivate marked " . count($toactivate) . " users");
 
         return $toactivate;
     }
