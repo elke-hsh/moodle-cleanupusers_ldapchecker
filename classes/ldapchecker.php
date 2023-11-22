@@ -81,8 +81,6 @@ class ldapchecker implements userstatusinterface {
                 }
 
                 $this->log("ldap server sent " . count($this->lookup) . " users");
-                //$this->log("Printing result entries: ");
-                //$this->log(print_r($this->lookup, true));
 
             } else {
                 $this->log("ldap_bind failed");
@@ -116,8 +114,11 @@ class ldapchecker implements userstatusinterface {
             if (!is_siteadmin($user) && !array_key_exists($user->username, $this->lookup)) {
                 $informationuser = new archiveduser($user->id, $user->suspended, $user->lastaccess, $user->username, $user->deleted);
                 $tosuspend[$key] = $informationuser;
+                $this->log("[get_to_suspend] "
+                    . $user->username . " marked");
             }
         }
+        $this->log("[get_to_suspend] marked " . count($tosuspend) . " users");
 
         return $tosuspend;
     }
@@ -160,58 +161,50 @@ class ldapchecker implements userstatusinterface {
         global $DB;
 
         // Select clause for users who are suspended.
-		$select = "auth='shibboleth' AND deleted=0 AND suspended=1 AND (lastaccess!=0 OR firstname='Anonym')";
+        $select = "auth='shibboleth' AND deleted=0 AND suspended=1 AND (lastaccess!=0 OR firstname='Anonym')";
         $users = $DB->get_records_select('user', $select);
-        $todeleteusers = array();
+        $todelete = array();
 
-        // Users who are not suspended by the plugin but are marked as suspended in the main table.
         foreach ($users as $key => $user) {
-            // Additional check for deletion, lastaccess and admin.
-            if ($user->deleted == 0 && !is_siteadmin($user)) {
+            if (!is_siteadmin($user)) {
                 $mytimestamp = time();
-
                 // User was suspended by the plugin.
-                if ($user->firstname == 'Anonym' && $user->lastaccess == 0) {
-                    $select = 'id=' . $user->id;
-
-                    $record = $DB->get_records_select('tool_cleanupusers', $select);
-                    if (!empty($record) && $record[$user->id]->timestamp != 0) {
-                        $suspendedbyplugin = true;
-                        $timearchived = $DB->get_record('tool_cleanupusers', array('id' => $user->id), 'timestamp');
-                        $timenotloggedin = $mytimestamp - $timearchived->timestamp;
-                    } else {
-                        // Users firstname is Anonym, although he is not in the plugin table. It can not be determined
-                        // when the user was suspended therefore he/she can not be handled.
-                        continue;
+                if ($DB->record_exists('tool_cleanupusers', array('id' => $user->id))) {
+                    $tableuser = $DB->get_record('tool_cleanupusers', array('id' => $user->id));
+                    $timearchived = $tableuser->timestamp;
+                    $timenotloggedin = $mytimestamp - $timearchived;
+                    // When the user did not sign in for the timedeleted he/she should be deleted.
+                    if ($timenotloggedin > $this->timedelete) {
+                        if ($DB->record_exists('tool_cleanupusers_archive', array('id' => $user->id))) {
+                            $shadowtableuser = $DB->get_record('tool_cleanupusers_archive', array('id' => $user->id));
+                            $informationuser = new archiveduser($shadowtableuser->id, $shadowtableuser->suspended,
+                                $shadowtableuser->lastaccess, $shadowtableuser->username, $shadowtableuser->deleted);
+                            $todelete[$key] = $informationuser;
+                            $this->log("[get_to_delete] "
+                                . $shadowtableuser->username . " / " . $user->username . " (suspended by plugin) marked");
+                        } else {
+                            $this->log("[get_to_delete] "
+                                . $user->username . " (suspended by plugin) has no entry in archive, skipping");
+                        }
                     }
-                } else if ($user->lastaccess != 0) {
-                    // User was suspended manually.
-                    $suspendedbyplugin = false;
-                    $timenotloggedin = $mytimestamp - $user->lastaccess;
-                } else {
-                    // The user was not suspended by the plugin but does not have a last access, therefore he/she is
-                    // not handled. This should not happen due to the select clause.
-                    continue;
                 }
-
-                // When the user did not sign in for the timedeleted he/she should be deleted.
-                if ($timenotloggedin > $this->timedelete && $user->suspended == 1) {
-                    if ($suspendedbyplugin) {
-                        // Users who are suspended by the plugin, therefore the plugin table is used.
-                        $select = 'id=' . $user->id;
-                        $pluginuser = $DB->get_record_select('tool_cleanupusers_archive', $select);
-                        $informationuser = new archiveduser($pluginuser->id, $pluginuser->suspended,
-                            $pluginuser->lastaccess, $pluginuser->username, $pluginuser->deleted);
-                    } else {
+                // User was suspended manually.
+                else if ($user->lastaccess != 0) {
+                    $timenotloggedin = $mytimestamp - $user->lastaccess;
+                    // When the user did not sign in for the timedeleted he/she should be deleted.
+                    if ($timenotloggedin > $this->timedelete) {
                         $informationuser = new archiveduser($user->id, $user->suspended, $user->lastaccess,
                             $user->username, $user->deleted);
+                        $todelete[$key] = $informationuser;
+                        $this->log("[get_to_delete] "
+                            . $informationuser->username . " / " . $user->username . " (suspended manually) marked");
                     }
-                    $todeleteusers[$key] = $informationuser;
                 }
             }
         }
+        $this->log("[get_to_delete] marked " . count($todelete) . " users");
 
-        return $todeleteusers;
+        return $todelete;
     }
 
     /**
@@ -230,18 +223,40 @@ class ldapchecker implements userstatusinterface {
 
         foreach ($users as $key => $user) {
             if (!is_siteadmin($user)) {
-                $shadowtableuser = $DB->get_record('tool_cleanupusers_archive', array('id' => $user->id));
-
-                if ($shadowtableuser && array_key_exists($shadowtableuser->username, $this->lookup)) {
-                    $activateuser = new archiveduser($shadowtableuser->id, $shadowtableuser->suspended, $shadowtableuser->lastaccess,
-                        $shadowtableuser->username, $shadowtableuser->deleted);
-
-                    $toactivate[$key] = $activateuser;
-                    $this->log($shadowtableuser->username . " / " . $user->username . " is marked for reactivation");
+                // User was suspended by the plugin.
+                if ($DB->record_exists('tool_cleanupusers', array('id' => $user->id))) {
+                    if ($DB->record_exists('tool_cleanupusers_archive', array('id' => $user->id))) {
+                        $shadowuser = $DB->get_record('tool_cleanupusers_archive', array('id' => $user->id));
+                        if (!$DB->record_exists('user', array('username' => $shadowuser->username))) {
+                            if (array_key_exists($shadowuser->username, $this->lookup)) {
+                                $activateuser = new archiveduser($shadowuser->id, $shadowuser->suspended, $shadowuser->lastaccess,
+                                    $shadowuser->username, $shadowuser->deleted);
+                                $toactivate[$key] = $activateuser;
+                                $this->log("[get_to_reactivate] "
+                                    .$shadowuser->username . " / " . $user->username . " (suspended by plugin) marked");
+                            }
+                        } else {
+                            $this->log("[get_to_reactivate] "
+                                . $user->username . " (suspended by plugin) already in user table, skipping");
+                        }
+                    } else {
+                        $this->log("[get_to_reactivate] "
+                            . $user->username . " (suspended by plugin) has no entry in archive, skipping");
+                    }
+                }
+                // User was suspended manually.
+                else {
+                    if (array_key_exists($user->username, $this->lookup)) {
+                        $activateuser = new archiveduser($user->id, $user->suspended, $user->lastaccess,
+                            $user->username, $user->deleted);
+                        $toactivate[$key] = $activateuser;
+                        $this->log("[get_to_reactivate] "
+                            . $user->username . " (suspended manually) marked");
+                    }
                 }
             }
         }
-        $this->log("get_to_reactivate marked " . count($toactivate) . " users");
+        $this->log("[get_to_reactivate] marked " . count($toactivate) . " users");
 
         return $toactivate;
     }
