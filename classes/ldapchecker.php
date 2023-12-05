@@ -188,18 +188,6 @@ class ldapchecker implements userstatusinterface {
                         }
                     }
                 }
-                // User was suspended manually.
-                else if ($user->lastaccess != 0) {
-                    $timenotloggedin = $mytimestamp - $user->lastaccess;
-                    // When the user did not sign in for the timedeleted he/she should be deleted.
-                    if ($timenotloggedin > $this->timedelete) {
-                        $informationuser = new archiveduser($user->id, $user->suspended, $user->lastaccess,
-                            $user->username, $user->deleted);
-                        $todelete[$key] = $informationuser;
-                        $this->log("[get_to_delete] "
-                            . $informationuser->username . " / " . $user->username . " (suspended manually) marked");
-                    }
-                }
             }
         }
         $this->log("[get_to_delete] marked " . count($todelete) . " users");
@@ -242,16 +230,6 @@ class ldapchecker implements userstatusinterface {
                     } else {
                         $this->log("[get_to_reactivate] "
                             . $user->username . " (suspended by plugin) has no entry in archive, skipping");
-                    }
-                }
-                // User was suspended manually.
-                else {
-                    if (array_key_exists($user->username, $this->lookup)) {
-                        $activateuser = new archiveduser($user->id, $user->suspended, $user->lastaccess,
-                            $user->username, $user->deleted);
-                        $toactivate[$key] = $activateuser;
-                        $this->log("[get_to_reactivate] "
-                            . $user->username . " (suspended manually) marked");
                     }
                 }
             }
