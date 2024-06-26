@@ -5,7 +5,8 @@ License: http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
 # userstatus_ldapchecker
 A subplugin for https://github.com/eLearning-TUDarmstadt/moodle-tool_cleanupusers that uses data from an external server connected with LDAP.
 
-Users that are no longer in the LDAP are archived by moving them to the DB table "mdl_tool_cleanupusers_archive". In the core table "mdl_user" the users will be anonymized: First name is set to "anonymous" and the user name to "anonymous+user-ID", e.g. "anonymous70". 
+Users that are no longer in the LDAP are archived by moving them to the DB table "mdl_tool_cleanupusers_archive". In the core table "mdl_user" the users will be anonymized: First name is set to "anonymous" and the user name to "anonymous+user-ID", e.g. "anonymous70".
+- `username` and `firstname` of suspended users can be customized in tool_cleanupusers
 The "deletetime" setting defines how long users remain archived before they are finally deleted. If users return to the LDAP within this deletetime period, they are reactivated with all previous data from "mdl_user".
 
 Settings located at /admin/settings.php?section=cleanupusers_userstatusldapchecker

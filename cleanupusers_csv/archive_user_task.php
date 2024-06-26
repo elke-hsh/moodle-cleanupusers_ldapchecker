@@ -24,9 +24,8 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-
 namespace tool_cleanupusers\task;
-
+// @codingStandardsIgnoreStart
 defined('MOODLE_INTERNAL') || die();
 
 use tool_cleanupusers\cleanupusers_exception;
@@ -37,7 +36,7 @@ use tool_cleanupusers\event\deprovisionusercronjob_completed;
 use core\task\scheduled_task;
 
 class archive_user_task extends scheduled_task {
-
+// @codingStandardsIgnoreEnd
     /**
      * Get a descriptive name for this task (shown to admins).
      *
@@ -84,7 +83,7 @@ class archive_user_task extends scheduled_task {
         $unabletodelete = $deleteresult['failures'];
         $userdeleted = $deleteresult['countersuccess'];
 
-        // Log users archived in the last task
+        // Log users archived in the last task.
         $this->write_csv($archievdusers);
 
 
@@ -93,17 +92,26 @@ class archive_user_task extends scheduled_task {
         $admin = get_admin();
         // Number of users suspended or deleted.
         $messagetext = get_string('e-mail-archived', 'tool_cleanupusers', $userarchived) .
-            "\r\n" .get_string('e-mail-deleted', 'tool_cleanupusers', $userdeleted);
+            "\r\n" . get_string('e-mail-deleted', 'tool_cleanupusers', $userdeleted);
 
         // No Problems occured during the cron-job.
-        if (empty($unabletoactivate) and empty($unabletoarchive) and empty($unabletodelete)) {
+        if (empty($unabletoactivate) && empty($unabletoarchive) && empty($unabletodelete)) {
             $messagetext .= "\r\n\r\n" . get_string('e-mail-noproblem', 'tool_cleanupusers');
         } else {
             // Extra information for problematic users.
-            $messagetext .= "\r\n\r\n" . get_string('e-mail-problematic_delete', 'tool_cleanupusers',
-                    count($unabletodelete)) . "\r\n\r\n" . get_string('e-mail-problematic_suspend', 'tool_cleanupusers',
-                    count($unabletoarchive)) . "\r\n\r\n" . get_string('e-mail-problematic_reactivate', 'tool_cleanupusers',
-                    count($unabletoactivate));
+            $messagetext .= "\r\n\r\n" . get_string(
+                'e-mail-problematic_delete',
+                'tool_cleanupusers',
+                count($unabletodelete)
+            ) . "\r\n\r\n" . get_string(
+                'e-mail-problematic_suspend',
+                'tool_cleanupusers',
+                count($unabletoarchive)
+            ) . "\r\n\r\n" . get_string(
+                'e-mail-problematic_reactivate',
+                'tool_cleanupusers',
+                count($unabletoactivate)
+            );
         }
 
         // Email is send from the do not reply user.
@@ -129,7 +137,7 @@ class archive_user_task extends scheduled_task {
      */
     private function change_user_deprovisionstatus($userarray, $intention) {
         // Checks whether the intention is valid.
-        if (!in_array($intention, array('suspend', 'reactivate', 'delete'))) {
+        if (!in_array($intention, ['suspend', 'reactivate', 'delete'])) {
             throw new \coding_exception('Invalid parameters in tool_cleanupusers.');
         }
 
@@ -137,23 +145,29 @@ class archive_user_task extends scheduled_task {
         $countersuccess = 0;
 
         // Array of users who could not be changed.
-        $failures = array();
+        $failures = [];
 
-        // Array of successfully archived users
-        $archivedusers = array();
+        // Array of successfully archived users.
+        $archivedusers = [];
 
         // Alternatively one could have written different function for each intention.
         // However, this would have produced duplicated code.
         // Therefore, checking the intention parameter repeatedly was preferred.
         foreach ($userarray as $key => $user) {
             if ($user->deleted == 0 && !is_siteadmin($user)) {
-                $changinguser = new archiveduser($user->id, $user->suspended, $user->lastaccess,
-                    $user->username, $user->deleted);
+                $changinguser = new archiveduser(
+                    $user->id,
+                    $user->suspended,
+                    $user->lastaccess,
+                    $user->username,
+                    $user->deleted
+                );
                 try {
                     switch ($intention) {
                         case 'suspend':
                             $changinguser->archive_me();
-                            array_push($archivedusers, [$user->id, $user->username, $user->firstname, $user->lastname,date('d.m.Y h:i:s', $user->lastaccess)]);
+                            array_push($archivedusers, [$user->id, $user->username, $user->firstname,
+                                       $user->lastname, date('d.m.Y h:i:s', $user->lastaccess)]);
                             break;
                         case 'reactivate':
                             $changinguser->activate_me();
@@ -169,19 +183,19 @@ class archive_user_task extends scheduled_task {
                 }
             }
         }
-        $result = array();
+        $result = [];
         $result['countersuccess'] = $countersuccess;
         $result['failures'] = $failures;
         $result['archivedusers'] = $archivedusers;
         return $result;
     }
 
-    private function write_csv($users){
+    private function write_csv($users) {
         $path = '/var/www/html/moodle/hrz-mdl/admin/tool/cleanupusers/logs';
-        if(!file_exists($path)){
+        if (!file_exists($path)) {
             mkdir($path, 0777, true);
         }
-        $out = fopen($path.'/archived_users_'.date("d_m_Y").'.csv', 'w');
+        $out = fopen($path . '/archived_users_' . date("d_m_Y") . '.csv', 'w');
 
         fputcsv($out, array_keys($users[0]), ';');
         foreach ($users as $line) {

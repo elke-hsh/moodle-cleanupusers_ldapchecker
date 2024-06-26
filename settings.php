@@ -30,59 +30,92 @@ if ($hassiteconfig) {
     $url = $CFG->wwwroot . '/' . $CFG->admin . '/tool/cleanupusers/ldapchecker/index.php';
 
 
-    $settings->add(new admin_setting_heading('ldapchecker_heading', get_string('settingsinformation',
-        'userstatus_ldapchecker'), get_string('introsettingstext', 'userstatus_ldapchecker')));
+    $settings->add(new admin_setting_heading('ldapchecker_heading', get_string(
+        'settingsinformation',
+        'userstatus_ldapchecker'
+    ), get_string('introsettingstext', 'userstatus_ldapchecker')));
 
-    $settings->add(new admin_setting_configtext('userstatus_ldapchecker/deletetime',
+    $settings->add(new admin_setting_configtext(
+        'userstatus_ldapchecker/deletetime',
         get_string('deletetime', 'userstatus_timechecker'),
-        get_string('timechecker_time_to_delete', 'userstatus_timechecker'), 365, PARAM_INT));
+        get_string('timechecker_time_to_delete', 'userstatus_timechecker'),
+        365,
+        PARAM_INT
+    ));
 
     // LDAP server settings.
-    $settings->add(new admin_setting_heading('userstatus_ldapchecker/ldapserversettings',
-        new lang_string('auth_ldap_server_settings', 'auth_ldap'), ''));
+    $settings->add(new admin_setting_heading(
+        'userstatus_ldapchecker/ldapserversettings',
+        new lang_string('auth_ldap_server_settings', 'auth_ldap'),
+        ''
+    ));
 
-    // Host
-    $settings->add(new admin_setting_configtext('userstatus_ldapchecker/host_url',
+    // Host.
+    $settings->add(new admin_setting_configtext(
+        'userstatus_ldapchecker/host_url',
         get_string('auth_ldap_host_url_key', 'auth_ldap'),
-        get_string('auth_ldap_host_url', 'auth_ldap'),  '', PARAM_RAW_TRIMMED));
+        get_string('auth_ldap_host_url', 'auth_ldap'),
+        '',
+        PARAM_RAW_TRIMMED
+    ));
 
     // Version.
-    $versions = array();
+    $versions = [];
     $versions[2] = '2';
     $versions[3] = '3';
-    $settings->add(new admin_setting_configselect('userstatus_ldapchecker/ldap_version',
+    $settings->add(new admin_setting_configselect(
+        'userstatus_ldapchecker/ldap_version',
         new lang_string('auth_ldap_version_key', 'auth_ldap'),
-        new lang_string('auth_ldap_version', 'auth_ldap'), 3, $versions));
+        new lang_string('auth_ldap_version', 'auth_ldap'),
+        3,
+        $versions
+    ));
 
     // Start TLS.
-    $yesno = array(
+    $yesno = [
         new lang_string('no'),
         new lang_string('yes'),
-    );
+    ];
 
-    $settings->add(new admin_setting_configselect('userstatus_ldapchecker/start_tls',
+    $settings->add(new admin_setting_configselect(
+        'userstatus_ldapchecker/start_tls',
         new lang_string('start_tls_key', 'auth_ldap'),
-        new lang_string('start_tls', 'auth_ldap'), 0 , $yesno));
+        new lang_string('start_tls', 'auth_ldap'),
+        0,
+        $yesno
+    ));
 
 
     // Bind settings.
-    $settings->add(new admin_setting_heading('userstatus_ldapchecker/ldapbindsettings',
-        new lang_string('auth_ldap_bind_settings', 'auth_ldap'), ''));
+    $settings->add(new admin_setting_heading(
+        'userstatus_ldapchecker/ldapbindsettings',
+        new lang_string('auth_ldap_bind_settings', 'auth_ldap'),
+        ''
+    ));
 
     // User ID.
-    $settings->add(new admin_setting_configtext('userstatus_ldapchecker/bind_dn',
+    $settings->add(new admin_setting_configtext(
+        'userstatus_ldapchecker/bind_dn',
         get_string('auth_ldap_bind_dn_key', 'auth_ldap'),
-        get_string('auth_ldap_bind_dn', 'auth_ldap'), '', PARAM_RAW_TRIMMED));
+        get_string('auth_ldap_bind_dn', 'auth_ldap'),
+        '',
+        PARAM_RAW_TRIMMED
+    ));
 
     // Password.
-    $settings->add(new admin_setting_configpasswordunmask('userstatus_ldapchecker/bind_pw',
+    $settings->add(new admin_setting_configpasswordunmask(
+        'userstatus_ldapchecker/bind_pw',
         get_string('auth_ldap_bind_pw_key', 'auth_ldap'),
-        get_string('auth_ldap_bind_pw', 'auth_ldap'), ''));
+        get_string('auth_ldap_bind_pw', 'auth_ldap'),
+        ''
+    ));
 
     // Contexts.
-    $settings->add(new auth_ldap_admin_setting_special_contexts_configtext('userstatus_ldapchecker/contexts',
+    $settings->add(new auth_ldap_admin_setting_special_contexts_configtext(
+        'userstatus_ldapchecker/contexts',
         get_string('auth_ldap_contexts_key', 'auth_ldap'),
-        get_string('auth_ldap_contexts', 'auth_ldap'), '', PARAM_RAW_TRIMMED));
-
-
+        get_string('auth_ldap_contexts', 'auth_ldap'),
+        '',
+        PARAM_RAW_TRIMMED
+    ));
 }

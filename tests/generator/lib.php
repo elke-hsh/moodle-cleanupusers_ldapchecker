@@ -23,9 +23,6 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-
 /**
  * Class Data Generator for the userstatus_ldapchecker sub-plugin
  *
@@ -38,37 +35,103 @@ class userstatus_ldapchecker_generator extends testing_data_generator {
     /**
      * Creates users in Database to test the sub-plugin.
      */
-    public function test_create_preparation () {
+    public function test_create_preparation() {
         global $DB;
         $generator = advanced_testcase::getDataGenerator();
 
-        // Create users which are in the LDAP-response
-        $generator->create_user(array('username' => 'tu_id_1', 'auth' => 'shibboleth'));
-        $generator->create_user(array('username' => 'tu_id_2', 'auth' => 'shibboleth'));
-        $generator->create_user(array('username' => 'tu_id_3', 'auth' => 'shibboleth'));
-        $generator->create_user(array('username' => 'tu_id_4', 'auth' => 'shibboleth'));
+        $yearago = time() - 366 * 86400;
+        $dayago = time() - 86400;
 
-        // Create user which should be suspended (not in lookup-table)
-        $generator->create_user(array('username' => 'to_suspend', 'auth' => 'shibboleth'));
+        // Create users which are in the LDAP-response.
+        $generator->create_user(['username' => 'tu_id_1', 'auth' => 'shibboleth', 'lastaccess' => $yearago]);
+        $generator->create_user(['username' => 'tu_id_2', 'auth' => 'shibboleth', 'lastaccess' => $yearago]);
+        $generator->create_user(['username' => 'tu_id_3', 'auth' => 'shibboleth', 'lastaccess' => $yearago]);
+        $generator->create_user(['username' => 'tu_id_4', 'auth' => 'shibboleth', 'lastaccess' => $yearago]);
 
-        // Create user which should be reactivated (are suspended but in lookup-table)
-        $generator->create_user(array('username' => 'to_reactivate', 'auth' => 'shibboleth', 'suspended' => 1));
+        // Create user which should be suspended (not in lookup-table).
+        $generator->create_user(['username' => 'to_suspend', 'auth' => 'shibboleth', 'lastaccess' => $yearago]);
 
-        // Create user which should NOT be reactivated (are suspended but NOT in lookup-table)
-        $generator->create_user(array('username' => 'to_not_reactivate', 'auth' => 'shibboleth', 'suspended' => 1));
+        // Create users which should NOT be suspended.
+        $generator->create_user(['username' => 'manually_suspended', 'auth' => 'shibboleth', 'suspended' => 1,
+            'lastaccess' => $yearago]);
+        $generator->create_user(['username' => 'manually_deleted', 'auth' => 'shibboleth', 'deleted' => 1]);
 
-        // Create user which was suspended manually and should be deleted (not logged in since one year)
-        $timestamponeyearago = time() - 366*86400;
-        $generator->create_user(array('username' => 'to_delete_manually', 'auth' => 'shibboleth', 'suspended' => 1, 'lastaccess' => $timestamponeyearago));
+        // Create users which never logged in.
+        $generator->create_user(['username' => 'never_logged_in_1', 'auth' => 'shibboleth', 'lastaccess' => 0]);
+        $generator->create_user(['username' => 'never_logged_in_2', 'auth' => 'shibboleth']);
 
-        // Create user which was suspended with the plugin and should be deleted (was suspended one year ago or earlier)
-        $delete = $generator->create_user(array('username' => 'anonym', 'firstname' => 'Anonym', 'auth'=>'shibboleth', 'suspended' => 1, 'lastaccess' => $timestamponeyearago));
-        $DB->insert_record_raw('tool_cleanupusers', array('id' => $delete->id, 'archived' => true, 'timestamp' => $timestamponeyearago), true, false, true);
-        $DB->insert_record_raw('tool_cleanupusers_archive', array('id' => $delete->id, 'auth'=>'shibboleth', 'username' => 'TO_DELETE_PLUGIN',
-            'suspended' => 1, 'lastaccess' => $timestamponeyearago), true, false, true);
-        $deleteduser = $delete;
+        // Create user which should be reactivated (are suspended but in lookup-table).
+        $reactivate = $generator->create_user(['username' => 'anonym1', 'firstname' => 'Anonym',
+        'auth' => 'shibboleth', 'suspended' => 1, 'lastaccess' => 0]);
+        $DB->insert_record_raw('tool_cleanupusers', ['id' => $reactivate->id, 'archived' => true,
+        'timestamp' => $yearago], true, false, true);
+        $DB->insert_record_raw('tool_cleanupusers_archive', ['id' => $reactivate->id, 'auth' => 'shibboleth',
+        'username' => 'to_reactivate',
+            'suspended' => 1, 'lastaccess' => $yearago], true, false, true);
 
-        return $deleteduser;
+        // Create users which should NOT be reactivated.
+        $notreactivate1 = $generator->create_user(['username' => 'to_not_reactivate', 'auth' => 'shibboleth',
+        'suspended' => 1, 'lastaccess' => $yearago]);
+        $generator->create_user(['username' => 'to_not_reactivate_username_taken', 'auth' => 'shibboleth',
+        'lastaccess' => $dayago]);
+        $notreactivate2 = $generator->create_user(['username' => 'anonym2', 'firstname' => 'Anonym',
+        'auth' => 'shibboleth', 'suspended' => 1, 'lastaccess' => 0]);
+        $DB->insert_record_raw('tool_cleanupusers', ['id' => $notreactivate2->id, 'archived' => true,
+        'timestamp' => $yearago], true, false, true);
+        $DB->insert_record_raw('tool_cleanupusers_archive', ['id' => $notreactivate2->id, 'auth' => 'shibboleth',
+        'username' => 'to_not_reactivate_username_taken',
+            'suspended' => 1, 'lastaccess' => $yearago], true, false, true);
+        $notreactivate3 = $generator->create_user(['username' => 'anonym3', 'firstname' => 'Anonym',
+        'auth' => 'shibboleth', 'suspended' => 1, 'lastaccess' => 0]);
+        $DB->insert_record_raw('tool_cleanupusers', ['id' => $notreactivate3->id, 'archived' => true,
+        'timestamp' => $yearago], true, false, true);
+        $notreactivate4 = $generator->create_user(['username' => 'anonym4', 'firstname' => 'Anonym',
+        'auth' => 'shibboleth', 'suspended' => 1, 'lastaccess' => 0]);
+        $DB->insert_record_raw('tool_cleanupusers_archive', ['id' => $notreactivate4->id, 'auth' => 'shibboleth',
+        'username' => 'to_not_reactivate_entry_missing',
+            'suspended' => 1, 'lastaccess' => $yearago], true, false, true);
+        $notreactivate5 = $generator->create_user(['username' => 'anonym5', 'firstname' => 'Anonym',
+        'auth' => 'shibboleth', 'suspended' => 1, 'lastaccess' => 0]);
 
+        // Create user which was suspended with the plugin and should be deleted (was suspended one year ago or earlier).
+        $delete = $generator->create_user(['username' => 'anonym6', 'firstname' => 'Anonym', 'auth' => 'shibboleth',
+        'suspended' => 1, 'lastaccess' => 0]);
+        $DB->insert_record_raw(
+            'tool_cleanupusers',
+            ['id' => $delete->id, 'archived' => true, 'timestamp' => $yearago],
+            true,
+            false,
+            true
+        );
+        $DB->insert_record_raw('tool_cleanupusers_archive', ['id' => $delete->id, 'auth' => 'shibboleth',
+        'username' => 'to_delete', 'suspended' => 1, 'lastaccess' => $yearago], true, false, true);
+
+        // Create users which were suspended with the plugin and should NOT be deleted.
+        $notdelete1 = $generator->create_user(['username' => 'anonym7', 'firstname' => 'Anonym', 'auth' => 'shibboleth',
+        'suspended' => 1, 'lastaccess' => 0]);
+        $DB->insert_record_raw(
+            'tool_cleanupusers',
+            ['id' => $notdelete1->id, 'archived' => true, 'timestamp' => $dayago],
+            true,
+            false,
+            true
+        );
+        $DB->insert_record_raw('tool_cleanupusers_archive', ['id' => $notdelete1->id, 'auth' => 'shibboleth',
+        'username' => 'to_not_delete_one_day', 'suspended' => 1, 'lastaccess' => $yearago], true, false, true);
+        $notdelete2 = $generator->create_user(['username' => 'anonym8', 'firstname' => 'Anonym', 'auth' => 'shibboleth',
+        'suspended' => 1, 'lastaccess' => 0]);
+        $DB->insert_record_raw(
+            'tool_cleanupusers',
+            ['id' => $notdelete2->id, 'archived' => true, 'timestamp' => $yearago],
+            true,
+            false,
+            true
+        );
+        $notdelete3 = $generator->create_user(['username' => 'anonym9', 'firstname' => 'Anonym', 'auth' => 'shibboleth',
+        'suspended' => 1, 'lastaccess' => 0]);
+        $DB->insert_record_raw('tool_cleanupusers_archive', ['id' => $notdelete3->id, 'auth' => 'shibboleth',
+        'username' => 'to_not_delete_entry_missing', 'suspended' => 1, 'lastaccess' => $yearago], true, false, true);
+        $notdelete4 = $generator->create_user(['username' => 'anonym10', 'firstname' => 'Anonym', 'auth' => 'shibboleth',
+        'suspended' => 1, 'lastaccess' => 0]);
     }
 }

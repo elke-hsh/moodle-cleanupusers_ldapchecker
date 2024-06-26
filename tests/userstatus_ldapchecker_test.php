@@ -22,9 +22,9 @@
  * @copyright  2016/17 N Herrmann
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-use userstatus_ldapchecker\ldapchecker;
 
-defined('MOODLE_INTERNAL') || die();
+namespace userstatus_ldapchecker;
+use advanced_testcase;
 
 /**
  * The class contains a test script for the moodle userstatus_ldapchecker
@@ -33,12 +33,15 @@ defined('MOODLE_INTERNAL') || die();
  * @category   phpunit
  * @copyright  2016/17 N Herrmann
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \userstatus_ldapchecker\ldapchecker::get_to_suspend()
+ * @covers     \userstatus_ldapchecker\ldapchecker::get_never_logged_in()
+ * @covers     \userstatus_ldapchecker\ldapchecker::get_to_delete()
+ * @covers     \userstatus_ldapchecker\ldapchecker::get_to_reactivate()
  */
 class userstatus_ldapchecker_test extends advanced_testcase {
-
     protected function set_up() {
         $config = get_config('userstatus_ldapchecker');
-        $config->deletetime = 356; // Set time for deleting users in days
+        $config->deletetime = 365; // Set time for deleting users in days.
 
         $generator = $this->getDataGenerator()->get_plugin_generator('userstatus_ldapchecker');
         $data = $generator->test_create_preparation();
@@ -51,38 +54,41 @@ class userstatus_ldapchecker_test extends advanced_testcase {
      * @see ldapchecker
      */
     public function test_locallib() {
-        $deleteduser_by_plugin = $this->set_up();
-
+        $this->set_up();
         // Testing is set to true which means that it does not try to connect to LDAP.
-        $myuserstatuschecker = new ldapchecker(true);
+        $checker = new ldapchecker(true);
 
-        $myuserstatuschecker->fill_ldap_response_for_testing(array( "tu_id_1" => 1,
+        $checker->fill_ldap_response_for_testing([ "tu_id_1" => 1,
                                                                     "tu_id_2" => 1,
                                                                     "tu_id_3" => 1,
                                                                     "tu_id_4" => 1,
-                                                                ));
+                                                                    "to_reactivate" => 1,
+                                                                    "to_not_reactivate_username_taken" => 1,
+                                                                    "to_not_reactivate_entry_missing" => 1,
+                                                                ]);
 
-        // User to suspend
-        $returnsuspend = $myuserstatuschecker->get_to_suspend();
-        $this->assertEquals("to_suspend", reset($returnsuspend)->username);
+        // Never logged in.
+        // Suspended users without archive table entry are included.
+        $never = ["anonym4", "anonym5", "anonym9", "anonym10", "never_logged_in_1", "never_logged_in_2"];
+        $returnnever = $checker->get_never_logged_in();
+        $this->assertEqualsCanonicalizing(array_map(fn($user) => $user->username, $returnnever), $never);
 
-        // Add user which should be reactivated
-        $myuserstatuschecker->fill_ldap_response_for_testing(array( "tu_id_1" => 1,
-            "tu_id_2" => 1,
-            "tu_id_3" => 1,
-            "tu_id_4" => 1,
-            "to_reactivate" => 1,
-        ));
-        $returntoreactivate = $myuserstatuschecker->get_to_reactivate();
-        $this->assertEquals("to_reactivate", reset($returntoreactivate)->username);
-        $this->assertEquals("to_reactivate", end($returntoreactivate)->username);
+        // To suspend.
+        $suspend = ["never_logged_in_1", "never_logged_in_2", "to_suspend"];
+        $returnsuspend = $checker->get_to_suspend();
+        $this->assertEqualsCanonicalizing(array_map(fn($user) => $user->username, $returnsuspend), $suspend);
 
-        $returndelete = $myuserstatuschecker->get_to_delete();
-        $this->assertEquals("to_delete_manually", reset($returndelete)->username);
-        $this->assertEquals($deleteduser_by_plugin->id, end($returndelete)->id);
+        // To reactivate.
+        $reactivate = ["to_reactivate"];
+        $returnreactivate = $checker->get_to_reactivate();
+        $this->assertEqualsCanonicalizing(array_map(fn($user) => $user->username, $returnreactivate), $reactivate);
+
+        // To delete.
+        $delete = ["to_delete"];
+        $returndelete = $checker->get_to_delete();
+        $this->assertEqualsCanonicalizing(array_map(fn($user) => $user->username, $returndelete), $delete);
 
         $this->resetAfterTest(true);
-
     }
     /**
      * Methods recommended by moodle to assure database and dataroot is reset.
@@ -100,7 +106,7 @@ class userstatus_ldapchecker_test extends advanced_testcase {
      */
     public function test_user_table_was_reset() {
         global $DB;
-        $this->assertEquals(2, $DB->count_records('user', array()));
-        $this->assertEquals(0, $DB->count_records('tool_cleanupusers', array()));
+        $this->assertEquals(2, $DB->count_records('user', []));
+        $this->assertEquals(0, $DB->count_records('tool_cleanupusers', []));
     }
 }

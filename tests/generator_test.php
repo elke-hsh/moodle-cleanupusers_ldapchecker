@@ -22,7 +22,7 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
+namespace userstatus_ldapchecker;
 
 /**
  * PHPUnit data generator testcase class
@@ -31,8 +31,9 @@ defined('MOODLE_INTERNAL') || die();
  * @category   phpunit
  * @copyright  2016/17 Nina Herrmann
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ * @covers     \userstatus_ldapchecker_generator::test_create_preparation
  */
-class userstatus_ldapchecker_generator_testcase extends advanced_testcase {
+class generator_test extends advanced_testcase {
     public function test_generator() {
         $this->resetAfterTest(true);
     }
