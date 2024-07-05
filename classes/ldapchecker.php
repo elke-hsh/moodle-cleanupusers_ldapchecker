@@ -54,8 +54,10 @@ class ldapchecker implements userstatusinterface {
 
         // Only connect to LDAP if we are not in testing case.
         if ($testing === false) {
-            $ldap = ldap_connect($config->host_url) || die("Could not connect to $config->host_url");
-
+            $ldap = ldap_connect($config->host_url);
+            if (!$ldap) {
+                die("Could not connect to $config->host_url");
+            }
             $bind = ldap_bind($ldap, $config->bind_dn, $config->bind_pw); // Returns 1 if correct.
 
             if ($bind) {
@@ -65,8 +67,10 @@ class ldapchecker implements userstatusinterface {
 
                 $attributes = ['cn'];
                 $filter = '(cn=*)';
-                $search = ldap_search($ldap, $contexts, $filter, $attributes) || die("Error in search Query: "
-                    . ldap_error($ldap));
+                $search = ldap_search($ldap, $contexts, $filter, $attributes);
+                if (!$search) {
+                    die("Error in search Query: " . ldap_error($ldap));
+                }
                 $result = ldap_get_entries($ldap, $search);
 
                 foreach ($result as $user) {
