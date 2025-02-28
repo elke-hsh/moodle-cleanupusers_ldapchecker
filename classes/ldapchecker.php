@@ -83,7 +83,8 @@ class ldapchecker implements userstatusinterface {
 
                 $this->log("ldap server sent " . count($this->lookup) . " users");
             } else {
-                $this->log("ldap_bind failed");
+                // Abort on failure of ldap binding
+                die("ldap_bind failed");
             }
         }
     }
